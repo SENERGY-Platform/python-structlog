@@ -86,7 +86,11 @@ class Logger(logging.Logger):
         self.__time_utc = time_utc
 
     def __gen_msg(self, level, msg, args):
-        items = {_TIME_KEY: _gen_timestamp(self.__time_utc), _LEVEL_KEY: logging.getLevelName(level), **self.__meta, _MSG_KEY: msg.__str__() % args}
+        try:
+            msg = msg.__str__() % args
+        except TypeError:
+            pass
+        items = {_TIME_KEY: _gen_timestamp(self.__time_utc), _LEVEL_KEY: logging.getLevelName(level), **self.__meta, _MSG_KEY: msg}
         for arg in args:
             if isinstance(arg, dict):
                 items.update(arg)
