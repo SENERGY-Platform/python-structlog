@@ -93,7 +93,10 @@ class Logger(logging.Logger):
         items = {_TIME_KEY: _gen_timestamp(self.__time_utc), _LEVEL_KEY: logging.getLevelName(level), **self.__meta, _MSG_KEY: msg}
         for arg in args:
             if isinstance(arg, dict):
-                items.update(arg)
+                normalized = {
+                    str(k): v for k, v in arg.items()
+                }
+                items.update(normalized)
         return json.dumps(items, separators=(",", ":"))
 
 
