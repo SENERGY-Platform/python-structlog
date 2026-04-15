@@ -93,10 +93,7 @@ class Logger(logging.Logger):
         items = {_TIME_KEY: _gen_timestamp(self.__time_utc), _LEVEL_KEY: logging.getLevelName(level), **self.__meta, _MSG_KEY: msg}
         for arg in args:
             if isinstance(arg, dict):
-                normalized = {
-                    str(k): v for k, v in arg.items()
-                }
-                items.update(normalized)
+                items.update(_json_safe(arg))
         return json.dumps(items, separators=(",", ":"))
 
 
@@ -111,3 +108,17 @@ def _add_stack_level(kwargs):
         kwargs[__STACKLEVEL_KEY] += 1
         return
     kwargs[__STACKLEVEL_KEY] = 2
+
+def _json_safe(obj):
+    if isinstance(obj, dict):
+        return {str(k): _json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple, set)):
+        return [_json_safe(v) for v in obj]
+    elif isinstance(obj, bytes):
+        return obj.decode("utf-8", errors="replace")
+    else:
+        try:
+            json.dumps(obj)
+            return obj
+        except TypeError:
+            return str(obj)
