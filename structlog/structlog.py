@@ -24,6 +24,7 @@ _ORGA_KEY = 'organization'
 _PROJECT_KEY = 'project'
 _LOGGER_NAME_KEY = 'logger_name'
 __STACKLEVEL_KEY = 'stacklevel'
+_RESERVED_KEYS = frozenset((_TIME_KEY, _LEVEL_KEY, _MSG_KEY, _ORGA_KEY, _PROJECT_KEY, _LOGGER_NAME_KEY))
 
 class Logger(logging.Logger):
 
@@ -74,12 +75,28 @@ class Logger(logging.Logger):
         child.__meta = meta
         return child
 
-    def configure(self, project_name='', organization_name='', time_utc=False, logger_name=False):
+    def configure(self, project_name='', organization_name='', time_utc=False, logger_name=False, extra=None):
+        """
+        Configure the static fields every log line of this logger carries.
+
+        'extra' is a mapping of further static fields, for context that belongs to
+        the whole process rather than to a single call — the OpenTelemetry baggage
+        a service was started with, for instance. Fields passed per call still win
+        over these, and the keys this logger owns ('time', 'level', 'msg',
+        'organization', 'project', 'logger_name') are ignored in 'extra', because a
+        line whose level or timestamp came out of caller-supplied context is no
+        longer readable.
+        """
         meta = dict()
         if organization_name is not None and organization_name != '':
             meta[_ORGA_KEY] = organization_name
         if project_name is not None and project_name != '':
             meta[_PROJECT_KEY] = project_name
+        if extra:
+            for key, value in _json_safe(extra).items():
+                if key in _RESERVED_KEYS:
+                    continue
+                meta[key] = value
         if logger_name:
             meta[_LOGGER_NAME_KEY] = self.name
         self.__meta = meta

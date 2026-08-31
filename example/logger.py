@@ -30,3 +30,11 @@ logger.warning('my message 2')
 child_logger = logger.getChild('child')
 child_logger.warning('my message 3',{"key_a": 456})
 # {"time":"2025-12-02T12:47:16.863002+00:00","level":"WARNING","organization":"my_orga","project":"my_project","logger_name":"my_logger.child","msg":"my message 3","key_a":456}
+
+# 'extra' adds static fields to every line, for context that belongs to the whole
+# process rather than to one call. Child loggers inherit them.
+logger.configure(organization_name='my_orga', project_name='my_project', time_utc=True, logger_name=True,
+                 extra={"smart_service_instance_id": "8fbd0e8a", "pipeline_id": "3c1f9b42"})
+
+logger.warning('my message 4')
+# {"time":"2025-12-02T12:47:16.863041+00:00","level":"WARNING","organization":"my_orga","project":"my_project","smart_service_instance_id":"8fbd0e8a","pipeline_id":"3c1f9b42","logger_name":"my_logger","msg":"my message 4"}
